@@ -2,64 +2,60 @@
 ---
 atividade1 
 
-***TypeScript***
-```typescript
-class BancoDadosSimulado {
-    produtos = [];
-    historico = [];
-    proximoIdProduto = 1;
-    proximoIdHistorico = 1;
-    dispararTrigger(itemAntigo, itemNovo) {
-        let historicoNovo = {
-            id: this.proximoIdHistorico,
-            produto_id: itemNovo.id,
-            quantidade_anterior: itemAntigo.quantidade,
-            quantidade_nova: itemNovo.quantidade,
-            data_alteracao: new Date()
-        };
-        this.historico.push(historicoNovo);
-        this.proximoIdHistorico = this.proximoIdHistorico + 1;
-    }
-    inserir(nome, quantidade) {
-        let prod = {
-            id: this.proximoIdProduto,
-            nome: nome,
-            quantidade: quantidade
-        };
-        this.produtos.push(prod);
-        this.proximoIdProduto = this.proximoIdProduto + 1;
-    }
-    atualizar(nome, novaQuantidade) {
-        let posicao = -1;
-        for (let i = 0; i < this.produtos.length; i++) {
-            if (this.produtos[i].nome == nome) {
-                posicao = i;
-            }
-        }
-        if (posicao != -1) {
-            let itemAntigo = {
-                id: this.produtos[posicao].id,
-                nome: this.produtos[posicao].nome,
-                quantidade: this.produtos[posicao].quantidade
-            };
-            this.produtos[posicao].quantidade = novaQuantidade;
-            let itemNovo = this.produtos[posicao];
-            this.dispararTrigger(itemAntigo, itemNovo);
-        }
-    }
-    mostrarTudo() {
-        return this.historico;
-    }
-}
-function rodar() {
-    let bd = new BancoDadosSimulado();
-    bd.inserir('Produto A', 100);
-    bd.inserir('Produto B', 200);
-    bd.atualizar('Produto A', 90);
-    bd.atualizar('Produto A', 75);
-    let final = bd.mostrarTudo();
-    console.table(final);
-}
-rodar();
+***MYSQL***
+```mysql
+CREATE TABLE produtos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100),
+    quantidade INT
+);
 
+CREATE TABLE historico_estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    produto_id INT,
+    quantidade_antiga INT,
+    quantidade_nova INT,
+    data_alteracao DATETIME
+);
+
+DELIMITER //
+
+CREATE TRIGGER registrar_alteracao_estoque
+AFTER UPDATE
+ON produtos
+FOR EACH ROW
+BEGIN
+
+    INSERT INTO historico_estoque (
+        produto_id,
+        quantidade_antiga,
+        quantidade_nova,
+        data_alteracao
+    )
+    VALUES (
+        NEW.id,
+        OLD.quantidade,
+        NEW.quantidade,
+        NOW()
+    );
+
+END //
+
+DELIMITER ;
+
+INSERT INTO produtos (nome, quantidade) VALUES
+("MAMÃO", 1),
+("SABÃO EM PÓ", 2);
+
+SELECT * FROM produtos;
+
+UPDATE produtos
+SET quantidade = 4
+WHERE ID = 1;
+
+UPDATE produtos
+SET quantidade = 7
+WHERE ID = 1;
+
+SELECT * FROM historico_estoque;
 ```
